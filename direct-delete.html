@@ -8,7 +8,7 @@
       src="https://cdnjs.cloudflare.com/ajax/libs/react/0.12.1/react.js"
     ></script>
     <script type="text/javascript">
-      let data = _buildData(1000);
+      console.timeEnd("build");
       document.addEventListener("DOMContentLoaded", function() {
         _react();
         _raw();
@@ -74,14 +74,16 @@
         var build_count = 0;
         for (var i = 0; i < count; i++)
           data.push({
-            id: i,
+            id: i + 1,
             label:
               adjectives[_random(adjectives.length)] +
               " " +
               colours[_random(colours.length)] +
               " " +
-              nouns[_random(nouns.length)]
+              nouns[_random(nouns.length)] +
+              build_count
           });
+        build_count++;
         return data;
       }
       function _random(max) {
@@ -89,40 +91,30 @@
       }
       function _react() {
         var Class = React.createClass({
-          select: function(el) {
-            date = new Date();
-            this.state.data.splice(this.state.data.indexOf(el), 1);
-            let temp = this.state.data;
-            this.setState({ data, temp }, () => {
-              runReact.innerHTML = new Date() - date + " ms";
-            });
+          select: function(data) {
+            this.props.selected = data.id;
             this.forceUpdate();
-          },
-          getInitialState() {
-            return {
-              data
-            };
           },
           render: function() {
             var items = [];
-            for (var i = 0; i < data.length; i++) {
+            for (var i = 0; i < this.props.data.length; i++) {
               items.push(
                 React.createElement(
                   "div",
                   { className: "row" },
                   React.createElement(
                     "div",
-                    { className: "test-data" },
+                    { className: "col-md-12 test-data" },
                     React.createElement(
                       "span",
                       {
                         className:
-                          this.props.selected === this.state.data[i].id
+                          this.props.selected === this.props.data[i].id
                             ? "selected"
                             : "",
-                        onClick: this.select.bind(null, data[i])
+                        onClick: this.select.bind(null, this.props.data[i])
                       },
-                      this.state.data[i].label
+                      this.props.data[i].label
                     )
                   )
                 )
@@ -132,32 +124,35 @@
           }
         });
         var runReact = document.getElementById("run-react");
-        React.render(new Class(), document.getElementById("react"));
-        runReact.addEventListener("click", function(el) {
-          date = new Date();
+        runReact.addEventListener("click", function() {
+          var data = _buildData(),
+            date = new Date();
+          React.render(
+            new Class({ data: data, selected: null }),
+            document.getElementById("react")
+          );
           runReact.innerHTML = new Date() - date + " ms";
         });
       }
       function _raw() {
-        let container = document.getElementById("raw");
-        template = document.getElementById("raw-template").innerHTML;
-        let html = "";
-        for (var i = 0; i < data.length; i++) {
-          var render = template;
-          render = render.replace("{{className}}", "");
-          render = render.replace("{{label}}", data[i].label);
-          html += render;
-        }
-        container.innerHTML = html;
-        const rows = document.getElementsByClassName("row");
-        for (let i = 0; i < rows.length; i++) {
-          rows[i].addEventListener("click", function(e) {
-            let date = new Date();
-            container.removeChild(this);
+        var container = document.getElementById("raw"),
+          template = document.getElementById("raw-template").innerHTML;
+        document
+          .getElementById("run-raw")
+          .addEventListener("click", function() {
+            var data = _buildData(),
+              date = new Date(),
+              html = "";
+            for (var i = 0; i < data.length; i++) {
+              var render = template;
+              render = render.replace("{{className}}", "");
+              render = render.replace("{{label}}", data[i].label);
+              html += render;
+            }
+            container.innerHTML = html;
             document.getElementById("run-raw").innerHTML =
               new Date() - date + " ms";
           });
-        }
       }
     </script>
   </head>
@@ -230,7 +225,6 @@
     .row {
       width: 232px;
       margin-right: 10px;
-      height: 28px;
     }
     .time {
       font-weight: bold;
